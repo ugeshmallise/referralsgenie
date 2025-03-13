@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Website</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preload" href="https://lottie.host/12c588bb-3fd2-4f07-baf9-1b46a0d69b8d/loSczvlfjd.lottie" 
+          as="fetch" type="application/octet-stream" crossorigin="anonymous">
+    <link rel="preload" href="https://lottie.host/96ef28aa-d750-49cd-9877-a5808975caee/xya65crOk0.lottie" 
+          as="fetch" type="application/octet-stream" crossorigin="anonymous">
+    
+</head>
+<body>
+    <header>
+        <h2>ReferralGenie</h2>
+        <nav>
+            <ul>
+                <li><a href="#" onclick="showSection('about')">About Us</a></li>
+                <li><a href="#" onclick="showSection('offer')">What We Offer</a></li>
+                <li><a href="#" onclick="showSection('contact')">Contact Us</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h2>Unlock Career Opportunities with ReferralGenie</h2>
+        <p>Refer & Get Hired</p>
+        <button class="cta-button">Get Started with a Video Guide</button>
+    </section>
+    <section class="auth-section">
+    <h2 style="background: linear-gradient(to right, #6d5dfc, #ba68c8); 
+           -webkit-background-clip: text; 
+           -webkit-text-fill-color: transparent;
+           font-weight: bold;">
+    Register by selecting your role and join with us
+</h2>
+
+
+    <div class="auth-container">
+        <!-- Job Role Selection First -->
+        <div class="toggle-container">
+            <div class="toggle">
+                <div class="slider" id="roleSlider"></div>
+                <button class="toggle-btn active" id="seekerBtn" onclick="toggleRole('seeker')">Job Seeker</button>
+                <button class="toggle-btn" id="providerBtn" onclick="toggleRole('provider')">Job Provider</button>
+            </div>
+        </div>
+
+        <!-- Login-Signup Toggle -->
+        <div class="toggle-container">
+            <div class="toggle">
+                <div class="slider" id="authSlider"></div>
+                <button class="toggle-btn active" onclick="toggleAuth('login')">Login</button>
+                <button class="toggle-btn" onclick="toggleAuth('register')">Signup</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+
+    <section class="opportunity-boxes">
+        <div class="box job-seeker">
+            <h4>Job Seeker</h4>
+            <ol>
+                <li>Register with ReferralGenie and unlock opportunities</li><br>
+                <li>Login securely to access your referral dashboard</li><br>
+                <li>Request a trusted referral for your dream company</li><br>
+                <li>Connect with verified referrers and boost your chances</li>
+            </ol>
+        </div>
+        <div class="box job-provider">
+            <h4>Job Provider</h4>
+            <ol>
+                <li>Register with us and start helping job seekers</li><br>
+                <li>Login securely to manage your referral requests</li><br>
+                <li>Complete referrals for deserving candidates</li><br>
+                <li>Earn rewards and build your professional network</li>
+            </ol>
+        </div>
+    </section>
+
+
+    <section id="about" class="hidden">
+        <h3>About Us</h3>
+        <p>Details about ReferralGenie...</p>
+    </section>
+
+    <section id="offer" class="hidden">
+        <h3>What We Offer</h3>
+        <p>Our unique services...</p>
+    </section>
+
+    <section id="contact" class="hidden">
+        <h3>Contact Us</h3>
+        <p>Email: contact@referralgenie.com</p>
+    </section>
+
+    <footer>
+        <p>© 2025 ReferralGenie</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

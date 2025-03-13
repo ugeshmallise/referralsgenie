@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    <title>Job Provider Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        .header {
+            width: 100%;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            color: white;
+            text-align: left;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .container {
+            background: black;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+            text-align: center;
+            border: 1px solid #6d5dfc;
+            margin-top: 60px;
+        }
+        .form-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin: 15px 0;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #6d5dfc;
+            border-radius: 5px;
+            background: black;
+            color: white;
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: linear-gradient(to right, #7a1fd5, #3a00c0);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">ReferralGenie - Job Provider Login</div>
+
+<!-- Lottie Animation -->
+<dotlottie-player src="https://lottie.host/12c588bb-3fd2-4f07-baf9-1b46a0d69b8d/loSczvlfjd.lottie" background="transparent" speed="1" style="width: 120px; height: 120px;" loop autoplay></dotlottie-player>
+
+<div class="container">
+    <div class="form-title">Login as a Job Provider</div>
+    <form id="jobProviderLoginForm">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        </div>
+
+        <button type="submit">Login</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById("jobProviderLoginForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+        const data = Object.fromEntries(formData.entries()); // Convert FormData to JSON
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/users/login-jobprovider/", { // ✅ Correct API endpoint
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error("Server Error: " + errorText);
+            }
+
+            const result = await response.json();
+            localStorage.setItem("access_token", result.access); // ✅ Store token
+            alert("Login successful!");
+            window.location.href = "dashboard.html"; // Redirect after login
+
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Network error: " + error.message);
+        }
+    });
+</script>
+
+</body>
+</html>

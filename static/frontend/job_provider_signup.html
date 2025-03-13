@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    <title>ReferralGenie - Job Provider Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        .header {
+            width: 100%;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            color: white;
+            text-align: left;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .container {
+            background: black;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+            text-align: center;
+            border: 1px solid #6d5dfc;
+            margin-top: 60px;
+        }
+        .form-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin: 15px 0;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #6d5dfc;
+            border-radius: 5px;
+            background: black;
+            color: white;
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: linear-gradient(to right, #7a1fd5, #3a00c0);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">ReferralGenie - Job Provider Registration</div>
+<div class="container">
+    <div class="form-title">Register as a Job Provider</div>
+    <form id="jobProviderSignupForm">
+        <div class="form-group">
+            <label for="full_name">Full Name:</label>
+            <input type="text" id="full_name" name="full_name" placeholder="Enter your full name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="company_name">Company Name:</label>
+            <input type="text" id="company_name" name="company_name" placeholder="Enter your company name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="company_email">Company Email:</label>
+            <input type="email" id="company_email" name="company_email" placeholder="Enter your company email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Company Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter your personal email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="mobile_number">Phone Number:</label>
+            <input type="tel" id="mobile_number" name="mobile_number" placeholder="Enter your phone number" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        </div>
+
+        <button type="submit">Register</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById("jobProviderSignupForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/users/register-jobprovider/", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error("Server Error: " + errorText);
+            }
+
+            alert("Registration successful! Please login.");
+            window.location.href = "job_provider_login.html";
+
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Network error: " + error.message);
+        }
+    });
+</script>
+
+</body>
+</html>
