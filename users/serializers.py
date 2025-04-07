@@ -43,3 +43,23 @@ class JobSeekerGuestUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobSeekerGuestUser
         fields = ['full_name', 'user_id', 'date_joined']
+
+
+from rest_framework import serializers
+from .models import JobPosting
+
+class JobPostingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobPosting
+        fields = '__all__'  # Includes all fields, including 'email'
+
+
+ 
+from rest_framework import serializers
+from .models import ContactSupport
+
+class ContactSupportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactSupport
+        fields = ['ticket_id', 'name', 'email', 'issue_description', 'is_resolved']
+        read_only_fields = ['ticket_id', 'is_resolved']  # These fields cannot be modified by users

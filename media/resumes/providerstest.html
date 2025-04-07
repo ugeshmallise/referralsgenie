@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Provider Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: 60px;
+            height: 100vh;
+            background: linear-gradient(to bottom, #6d5dfc, #ba68c8);
+            color: white;
+            padding: 20px 10px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            transition: width 0.3s ease-in-out;
+            overflow: hidden;
+        }
+
+        .sidebar.expanded {
+            width: 220px;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+
+        .sidebar .menu-items {
+            display: none;
+        }
+
+        .sidebar.expanded .menu-items {
+            display: block;
+        }
+
+        .menu-items p {
+            cursor: pointer;
+            padding: 10px;
+            transition: 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .menu-items p:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .content-wrapper {
+            flex-grow: 1;
+            padding: 40px;
+            margin-left: 70px;
+            transition: margin-left 0.3s ease-in-out;
+            width: 100%;
+        }
+
+        .content-wrapper.expanded {
+            margin-left: 230px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: #111;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            margin: auto;
+            display: none;
+        }
+
+        .container.active {
+            display: block;
+        }
+
+        .custom-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+            border: 1px solid #444;
+        }
+
+        .save-btn, .post-btn {
+            background: linear-gradient(to right, #6d5dfc, #ba68c8);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 30px;
+            transition: 0.3s;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .save-btn:hover, .post-btn:hover {
+            background: #ff4444;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 50px;
+            }
+
+            .sidebar.expanded {
+                width: 180px;
+            }
+
+            .content-wrapper {
+                margin-left: 55px;
+            }
+
+            .content-wrapper.expanded {
+                margin-left: 190px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    <div class="menu-items">
+        <h2>Dashboard</h2>
+        <p onclick="showSection('dashboard-section')">Dashboard</p>
+        <p onclick="showSection('profile-section')">Profile</p>
+        <p onclick="showSection('post-job-section')">Post a Job</p>
+
+<p onclick="showSection('approve-referrals-section')">Approve Referrals</p>
+
+<p onclick="showSection('contact-support-section')">Contact Support</p>
+
+    </div>
+</div>
+
+<div class="content-wrapper" id="content-wrapper">
+    <div class="container active" id="dashboard-section">
+        <h2>Referrals Overview</h2>
+        <canvas id="barChart"></canvas>
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <div class="container" id="profile-section">
+        <h2>Profile</h2>
+        <p><strong>Name:</strong> <input type="text" class="custom-input" value="John Doe"></p>
+        <p><strong>Company Email:</strong> <input type="text" class="custom-input" value="company@email.com"></p>
+        <p><strong>Personal Email:</strong> <input type="text" class="custom-input" value="personal@email.com"></p>
+        <p><strong>Contact Number:</strong> <input type="text" class="custom-input" value="(91) 9045697890"></p>
+        <p><strong>Total Years of Experience:</strong> <input type="text" class="custom-input" value="5"></p>
+        <button class="save-btn">Save</button>
+    </div>
+
+    <div class="container" id="post-job-section">
+        <h2>Post a Job</h2>
+        <p><strong>Company Name:</strong> <input type="text" class="custom-input"></p>
+        <p><strong>Role:</strong> <input type="text" class="custom-input"></p>
+        <p><strong>Job Description:</strong> <textarea class="custom-input"></textarea></p>
+        <p><strong>Official Link to Job Post:</strong> <input type="text" class="custom-input"></p>
+        <button class="post-btn">Post Job</button>
+    </div>
+
+<div class="container" id="approve-referrals-section">
+    <h2>Approve Referrals</h2>
+    
+    <div style="border-bottom: 1px solid #444; padding: 10px;">
+        <p><strong>Software Engineer</strong></p>  
+        <p>John Doe, 5 years, 30 Days, <a href="#">View Resume</a></p>
+        <button class="status-btn" onclick="updateStatus(this, 'Approved')">Approve Referral</button>
+
+<button class="status-btn reject-btn" onclick="updateStatus(this, 'Rejected')">Reject Referral</button>
+
+        <button class="status-btn" onclick="updateStatus(this, 'Verified')">Verified Profile</button>
+        <button class="status-btn" onclick="updateStatus(this, 'Submitted')">Submitted Referral</button>
+    </div>
+
+    <div style="border-bottom: 1px solid #444; padding: 10px;">
+        <p><strong>DevOps Engineer</strong></p>  
+        <p>Jane Smith, 4 years, 60 Days, <a href="#">View Resume</a></p>
+        <button class="status-btn" onclick="updateStatus(this, 'Approved')">Approve Referral</button>
+
+<button class="status-btn reject-btn" onclick="updateStatus(this, 'Rejected')">Reject Referral</button>
+
+        <button class="status-btn" onclick="updateStatus(this, 'Verified')">Verified Profile</button>
+        <button class="status-btn" onclick="updateStatus(this, 'Submitted')">Submitted Referral</button>
+    </div>
+</div>
+
+
+    <div class="container" id="contact-support-section">
+        <h2>Contact Support</h2>
+        <p><strong>Name:</strong> <input type="text" class="custom-input" id="support-name"></p>
+        <p><strong>Email:</strong> <input type="email" class="custom-input" id="support-email"></p>
+        <p><strong>Issue Description:</strong></p>
+        <textarea class="custom-input" id="support-issue" rows="4"></textarea>
+        <button class="save-btn" onclick="submitSupport()">Submit</button>
+    </div>
+
+</div>
+
+<script>
+    function toggleMenu() {
+        const sidebar = document.getElementById("sidebar");
+        const content = document.getElementById("content-wrapper");
+        sidebar.classList.toggle("expanded");
+        content.classList.toggle("expanded");
+    }
+
+    function showSection(sectionId) {
+        document.querySelectorAll('.container').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        document.getElementById(sectionId).classList.add('active');
+
+        document.getElementById("sidebar").classList.remove("expanded");
+        document.getElementById("content-wrapper").classList.remove("expanded");
+    }
+
+   window.onload = function() {
+    function setChartSize() {
+        const screenWidth = window.innerWidth;
+        let barWidth, barHeight, pieWidth, pieHeight;
+
+        if (screenWidth > 1200) { // Large screens
+            barWidth = 600;
+            barHeight = 400;
+            pieWidth = 400;
+            pieHeight = 400;
+        } else if (screenWidth > 768) { // Medium screens (tablets)
+            barWidth = 400;
+            barHeight = 300;
+            pieWidth = 300;
+            pieHeight = 300;
+        } else { // Small screens (mobile)
+            barWidth = 300;
+            barHeight = 200;
+            pieWidth = 250;
+            pieHeight = 250;
+        }
+
+        // Apply new sizes
+        const barCanvas = document.getElementById("barChart");
+        const pieCanvas = document.getElementById("pieChart");
+
+        barCanvas.width = barWidth;
+        barCanvas.height = barHeight;
+        pieCanvas.width = pieWidth;
+        pieCanvas.height = pieHeight;
+
+        // Initialize Charts
+        new Chart(barCanvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: ["Jan", "Feb", "Mar", "Apr", "May"],
+                datasets: [{
+                    label: "No. of Applications Received eved",
+                    data: [10, 20, 30, 40, 50],
+                    backgroundColor: "rgba(75, 192, 192, 0.6)",
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+            }
+        });
+
+        new Chart(pieCanvas.getContext("2d"), {
+            type: "pie",
+            data: {
+                labels: ["In Progress", "Rejected", "Successfully Completed"],
+                datasets: [{
+                    data: [40, 30, 30],
+                    backgroundColor: ["#4caf50", "#f44336", "#ff9800"]
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+            }
+        });
+    }
+
+    setChartSize(); // Set size initially
+    window.addEventListener("resize", setChartSize); // Update size on window resize
+};
+
+function updateStatus(button, status) {
+        alert("Application status updated to: " + status);
+        button.style.background = "#4caf50";
+        button.style.color = "#fff";
+        button.disabled = true;
+    }
+
+    function submitSupport() {
+        let name = document.getElementById("support-name").value;
+        let email = document.getElementById("support-email").value;
+        let issue = document.getElementById("support-issue").value;
+
+        if (name && email && issue) {
+            alert("Support request submitted successfully!");
+            document.getElementById("support-name").value = "";
+            document.getElementById("support-email").value = "";
+            document.getElementById("support-issue").value = "";
+        } else {
+            alert("Please fill all fields before submitting.");
+        }
+    }
+
+</script>
+
+</body>
+</html>

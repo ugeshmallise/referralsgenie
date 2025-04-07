@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'referralsgenie.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',        # Replace with your PostgreSQL database name
+        'NAME': 'referralsgenie',        # Replace with your PostgreSQL database name
         'USER': 'postgres',        # Replace with your PostgreSQL username
         'PASSWORD': 'postgres',  # Replace with your PostgreSQL password
         'HOST': 'localhost',            # Change if your DB is hosted elsewhere

@@ -37,9 +37,7 @@ User = get_user_model()  # Get the User model dynamically
 @api_view(['POST'])
 def login_user(request):
     """
-    Login API with authentication.
-    It verifies the email and password using Django's authentication system,
-    activates the user, and returns new tokens.
+    Login API for Job Seekers.
     """
     email = request.data.get('email')
     password = request.data.get('password')
@@ -47,26 +45,22 @@ def login_user(request):
     if not email or not password:
         return Response({"detail": "Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Try authenticating using Django's built-in authentication
+    # Authenticate Job Seeker only
     user = authenticate(username=email, password=password)
 
     if user is None:
-        # If not found in User model, check JobSeekerUser model
-        try:
-            user = JobSeekerUser.objects.get(email=email)
-        except JobSeekerUser.DoesNotExist:
-            return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Verify password manually (only if JobSeekerUser model does not use Django authentication)
-        if hasattr(user, 'check_password') and not user.check_password(password):
-            return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+    # Ensure the user is a Job Seeker (Prevent Job Providers from logging in)
+    if not isinstance(user, User):
+        return Response({"detail": "Unauthorized. Please use the correct login endpoint."}, status=status.HTTP_403_FORBIDDEN)
 
     # Reactivate user if needed
     if not user.is_active:
         user.is_active = True
         user.save()
 
-    # Generate new tokens
+    # Generate JWT tokens
     refresh = CustomRefreshToken.for_user(user)
 
     return Response({
@@ -74,6 +68,7 @@ def login_user(request):
         'access': str(refresh.access_token),
         'message': "Login successful."
     }, status=status.HTTP_200_OK)
+
 
 
 
@@ -96,28 +91,35 @@ def register_jobprovider(request):
 # Login Job Seeker
 @api_view(['POST'])
 def login_jobprovider(request):
+    """
+    Login API for Job Providers only.
+    """
     email = request.data.get('email')
     password = request.data.get('password')
 
     if not email or not password:
         return Response({"detail": "Email and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = authenticate(request, username=email, password=password)
+    # Authenticate user
+    user = authenticate(username=email, password=password)
 
-    if user is not None:
-        if not user.is_active:
-            user.is_active = True  # Reactivate the job seeker user
-            user.save()
+    # Ensure the user is a Job Provider
+    if user is None or not isinstance(user, JobSeekerUser):  # Assuming User model is Job Provider
+        return Response({"detail": "Unauthorized. Please use the correct login endpoint."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Generate new tokens
-        refresh = CustomRefreshToken.for_user(user)
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'message': "Login successful and account reactivated." if not user.is_active else "Login successful."
-        }, status=status.HTTP_200_OK)
+    if not user.is_active:
+        user.is_active = True  # Reactivate the job provider user
+        user.save()
 
-    return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+    # Generate JWT token
+    refresh = CustomRefreshToken.for_user(user)
+
+    return Response({
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'message': "Job Provider login successful."
+    }, status=status.HTTP_200_OK)
+
 
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -218,3 +220,199 @@ def jobseeker_guest_logout(request):
         return Response({"message": "Guest user logged out and deleted successfully."}, status=status.HTTP_200_OK)
     except JobSeekerGuestUser.DoesNotExist:
         return Response({"detail": "Guest user not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+from .models import JobPosting
+from .serializers import JobPostingSerializer
+from rest_framework.views import APIView
+class JobPostingView(APIView):
+    """
+    Handles all CRUD operations related to job postings.
+    """
+
+    def get_object(self, job_id):
+        """ Retrieve a job posting by its UUID. """
+        try:
+            return JobPosting.objects.get(job_id=job_id)
+        except JobPosting.DoesNotExist:
+            return None
+
+    def get(self, request, job_id=None, *args, **kwargs):
+        """
+        Retrieve job postings created by the specific user.
+        - If job_id is provided, return that specific job.
+        - Otherwise, return all job postings created by the logged-in user.
+        """
+        user_email = request.GET.get("email", "ugesh@gmail.com")  # Default email for now
+        
+        if job_id:
+            job_post = self.get_object(job_id)
+            if not job_post:
+                return Response({"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+            if job_post.email != user_email:
+                return Response({"error": "Unauthorized access to this job posting"}, status=status.HTTP_403_FORBIDDEN)
+            serializer = JobPostingSerializer(job_post)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Fetch jobs posted by the logged-in user
+        jobs = JobPosting.objects.filter(email=user_email)
+        serializer = JobPostingSerializer(jobs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create a new job posting.
+        """
+        job_data = request.data.copy()
+        job_data['email'] = "ugesh@gmail.com"  # Set the email automatically for now
+        
+        serializer = JobPostingSerializer(data=job_data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Job posted successfully",
+                "job": serializer.data
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, job_id, *args, **kwargs):
+        """
+        Update a job posting.
+        """
+        job_post = self.get_object(job_id)
+        if not job_post:
+            return Response({"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Ensure only the owner can update the job
+        user_email = request.data.get("email", "ugesh@gmail.com")  # Default email for now
+        if job_post.email != user_email:
+            return Response({"error": "Unauthorized access to update this job"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = JobPostingSerializer(job_post, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Job updated successfully", "job": serializer.data}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, job_id, *args, **kwargs):
+        """
+        Delete a job posting.
+        """
+        job_post = self.get_object(job_id)
+        if not job_post:
+            return Response({"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Ensure only the owner can delete the job
+        user_email = request.data.get("email", "ugesh@gmail.com")  # Default email for now
+        if job_post.email != user_email:
+            return Response({"error": "Unauthorized access to delete this job"}, status=status.HTTP_403_FORBIDDEN)
+
+        job_post.delete()
+        return Response({"message": "Job deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+from .models import JobPosting
+from .serializers import JobPostingSerializer
+
+class JobPostingListView(generics.ListAPIView):
+    queryset = JobPosting.objects.all()
+    serializer_class = JobPostingSerializer
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import ContactSupport
+from .serializers import ContactSupportSerializer
+
+class BaseSupportView(APIView):
+    """
+    A base class for handling support ticket operations.
+    """
+
+    def get_ticket(self, ticket_id):
+        """Retrieve a support ticket by ticket_id"""
+        try:
+            return ContactSupport.objects.get(ticket_id=ticket_id)
+        except ContactSupport.DoesNotExist:
+            return None
+
+    def create_ticket(self, request):
+        """Create a new support ticket"""
+        if request.content_type != "application/json":
+            return Response({"error": "Invalid Content-Type. Use application/json"}, status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+        serializer = ContactSupportSerializer(data=request.data)
+        if serializer.is_valid():
+            ticket = serializer.save()  # Save the new ticket
+            return Response({
+                "message": "Support ticket created successfully!",
+                "ticket_id": str(ticket.ticket_id)  # Ensure UUID is returned as string
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def fetch_ticket(self, ticket_id):
+        """Fetch details of a specific support ticket"""
+        ticket = self.get_ticket(ticket_id)
+        if ticket:
+            return Response({
+                "ticket_id": str(ticket.ticket_id),
+                "email": ticket.email,
+                "is_resolved": ticket.is_resolved
+            }, status=status.HTTP_200_OK)
+        return Response({"error": "Support ticket not found!"}, status=status.HTTP_404_NOT_FOUND)
+
+    def list_tickets_by_email(self, email):
+        """Fetch all tickets created by a particular email"""
+        tickets = ContactSupport.objects.filter(email=email)
+        if tickets.exists():
+            serializer = ContactSupportSerializer(tickets, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"message": "No tickets found for this email."}, status=status.HTTP_404_NOT_FOUND)
+
+    def resolve_ticket(self, ticket_id):
+        """Mark a support ticket as resolved"""
+        ticket = self.get_ticket(ticket_id)
+        if not ticket:
+            return Response({"error": "Support ticket not found!"}, status=status.HTTP_404_NOT_FOUND)
+
+        if ticket.is_resolved:
+            return Response({"message": "This ticket is already resolved."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ticket.is_resolved = True
+        ticket.save()
+        return Response({"message": "Support ticket resolved successfully!"}, status=status.HTTP_200_OK)
+
+
+class ContactSupportView(BaseSupportView):
+    """
+    API endpoint for submitting a support issue (POST) and fetching a support ticket (GET)
+    """
+
+    def post(self, request):
+        """Handles ticket creation"""
+        return self.create_ticket(request)
+
+    def get(self, request, ticket_id=None):
+        """Handles fetching a specific ticket or listing all tickets for an email"""
+        if ticket_id:
+            return self.fetch_ticket(ticket_id)
+        email = request.GET.get("email")
+        if email:
+            return self.list_tickets_by_email(email)
+        return Response({"error": "Ticket ID or email parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResolveTicketView(BaseSupportView):
+    """
+    API endpoint to mark a ticket as resolved (PATCH)
+    """
+
+    def patch(self, request, ticket_id):
+        """Handles resolving a ticket"""
+        return self.resolve_ticket(ticket_id)
